@@ -23,8 +23,11 @@ import model.repository.MapPlaylistRepository;
 import model.repository.PlaylistRepository;
 
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.Collection;
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 
 @Path("/songs")
@@ -48,7 +51,7 @@ public class SongResource {
 	@Produces("application/json")
 	public Collection<Song> getAll()
 	{
-		return null;
+		return repository.getAllSongs();
 	}
 	
 	
@@ -57,28 +60,52 @@ public class SongResource {
 	@Produces("application/json")
 	public Song get(@PathParam("id") String songId)
 	{
-		
-		return null;
+		Song resultado=repository.getSong(songId);
+                if(resultado==null)
+                    throw new NotFoundException("La canción no existe");
+		return repository.getSong(songId);
 	}
 	
 	@POST
 	@Consumes("application/json")
 	@Produces("application/json")
 	public Response addSong(@Context UriInfo uriInfo, Song song) {
-		return null;
+            if(song.getTitle()!=null && !song.getTitle().equals("")){
+                repository.addSong(song);
+            }else
+                throw new BadRequestException("Las canciones deben tener título");
+            
+            URI resultado=null;
+            try {
+                resultado=new URI("");
+            } catch (URISyntaxException ex) {
+                Logger.getLogger(SongResource.class.getName()).log(Level.SEVERE,null,ex);
+            }
+            ResponseBuilder resp=Response.created(resultado);
+            resp.entity(song);
+            return resp.build();
 	}
 	
 	
 	@PUT
 	@Consumes("application/json")
-	public Response updateSong(Song song) {
-		return null;
+	public void updateSong(Song song) {
+            Song oldSong=repository.getSong(song.getId());
+            if(oldSong==null)
+                throw new NotFoundException("La canción no existe");
+            if(song.getTitle()==null || song.getTitle().equals(""))
+                throw new BadRequestException("Deben tener título");
+            repository.updateSong(song);
 	}
 	
 	@DELETE
 	@Path("/{id}")
-	public Response removeSong(@PathParam("id") String songId) {
-		return null;
+	public void removeSong(@PathParam("id") String songId) {
+            
+            Song song=repository.getSong(songId);
+            if(song==null)
+		throw new NotFoundException("No se ha encontrado la canción");
+            repository.deleteSong(songId);
 	}
 	
 }
